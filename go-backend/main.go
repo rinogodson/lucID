@@ -13,7 +13,7 @@ var db *sql.DB
 
 func initDB() {
 	var err error
-	db, err = sql.Open("go-sqlite3", "./database/app.db")
+	db, err = sql.Open("sqlite3", "./database/app.db")
 	if err != nil {
 		fmt.Print("Error on db: ", err)
 	}
