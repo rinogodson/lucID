@@ -1,15 +1,32 @@
-/# Binaries
+# Binaries for the current project
 *.exe
+*.bin
 *.out
-*.dll
 
-# Go build cache
-/go.sum
-/go.mod
+# Go module cache and build artifacts
+/vendor/
+/pkg/
+/build/
 
-# Database files
-/database/
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.bak
+*~
 
-# OS-specific junk
+# Operating system generated files
 .DS_Store
 Thumbs.db
+
+# Test-related files
+testdata/
+testresults/
+
+# Log files
+*.log
+
+# Environment variables and sensitive data
+.env
+
+/database/
