@@ -3,10 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
+	"lucid.backend/uidgen"
+	"net/http"
 )
 
 var db *sql.DB
@@ -40,6 +40,17 @@ type Person struct {
 	Age      int    `json:"age"` // just a number
 }
 
+func getUID() string {
+	for {
+		uid := uidgen.UIDGen()
+		var exists string
+		err := db.QueryRow("SELECT uid FROM ppl WHERE uid = ?", uid).Scan(&exists)
+		if err == sql.ErrNoRows {
+			return uid
+		}
+	}
+}
+
 func main() {
 	initDB()
 	r := gin.Default()
@@ -51,6 +62,9 @@ func main() {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		bob.UID = getUID()
+
 		_, err = db.Exec("INSERT INTO ppl (uid, name, team_no, team_name, age) VALUES (?,?,?,?,?)",
 			bob.UID,
 			bob.Name,
@@ -74,8 +88,12 @@ func main() {
 		defer rows.Close() // getting a warning here and ignoring it, why can't? Golang errors are a pain in the ...
 		var people []Person
 		for rows.Next() {
-			var bob Person                                                       // bob goated here too!
-			rows.Scan(&bob.UID, &bob.Name, &bob.TeamNo, &bob.TeamName, &bob.Age) // getting a warning here and ignoring it
+			var bob Person                                                                       // bob goated here too!
+			err := rows.Scan(&bob.UID, &bob.Name, &bob.TeamNo, &bob.TeamName, &bob.Age, &bob.ID) // getting a warning here and ignoring it
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 			people = append(people, bob)
 		}
 		ctx.JSON(http.StatusOK, people)
@@ -84,7 +102,7 @@ func main() {
 	r.GET("/uid/:id", func(ctx *gin.Context) {
 		id := ctx.Param("id")
 		var bob Person // bob again :)
-		err := db.QueryRow("SELECT * FROM ppl WHERE id = ?", id).Scan(&bob.UID, &bob.Name, &bob.TeamNo, &bob.TeamName, &bob.Age)
+		err := db.QueryRow("SELECT * FROM ppl WHERE id = ?", id).Scan(&bob.UID, &bob.Name, &bob.TeamNo, &bob.TeamName, &bob.Age, &bob.ID)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "this is a person from the quantum realm, not available here..."})
 			return
