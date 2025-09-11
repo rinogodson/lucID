@@ -29,5 +29,5 @@ testresults/
 # Environment variables and sensitive data
 .env
 
-/database/
+go-backend/database/
 
