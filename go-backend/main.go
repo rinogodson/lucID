@@ -275,5 +275,25 @@ func main() {
 		ctx.JSON(http.StatusOK, people)
 	})
 
+	r.POST("/new/team", func(ctx *gin.Context) {
+		var newTeam Person
+		err := ctx.ShouldBindJSON(&newTeam)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		res, err := db.Exec("INSERT INTO teams (name) VALUES (?)",
+			newTeam.Name,
+		)
+		lastID, err := res.LastInsertId()
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			fmt.Print("Error:", err)
+			return
+		}
+		ctx.JSON(http.StatusCreated, gin.H{"message": "yay! new team", "id": lastID})
+	})
 	r.Run(":8080")
 }

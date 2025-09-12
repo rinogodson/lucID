@@ -6,7 +6,7 @@ import (
 
 func UIDGen() string {
 	digits := []rune("23456789")
-	letters := []rune("ABCDEFGHJKLMNPQRSTUVWXYZ")
+	letters := []rune("ABCDEFGHJKLMNPQRTUVWXYZ")
 	d1 := digits[rand.Intn(len(digits))]
 	d2 := letters[rand.Intn(len(letters))]
 	d3 := digits[rand.Intn(len(digits))]
