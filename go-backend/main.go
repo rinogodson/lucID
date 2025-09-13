@@ -283,7 +283,7 @@ func main() {
 			return
 		}
 
-		res, err := db.Exec("INSERT INTO teams (name) VALUES (?)",
+		res, _ := db.Exec("INSERT INTO teams (name) VALUES (?)",
 			newTeam.Name,
 		)
 		lastID, err := res.LastInsertId()
@@ -295,5 +295,55 @@ func main() {
 		}
 		ctx.JSON(http.StatusCreated, gin.H{"message": "yay! new team", "id": lastID})
 	})
+
+	r.PUT("/update/team/id", func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		var bob Person
+		if err := ctx.ShouldBindJSON(&bob); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		var alice Person
+		err := db.QueryRow("SELECT uid, name, age, id, team_id FROM ppl WHERE uid = ?", id).
+			Scan(&alice.UID, &alice.Name, &alice.Age, &alice.ID, &alice.TeamID)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		updates := []string{}
+		args := []any{}
+
+		if bob.Name != "" && bob.Name != alice.Name {
+			updates = append(updates, "name=?")
+			args = append(args, bob.Name)
+		}
+		if bob.Age != 0 && bob.Age != alice.Age {
+			updates = append(updates, "age=?")
+			args = append(args, bob.Age)
+		}
+		if bob.TeamID != 0 && bob.TeamID != alice.TeamID {
+			updates = append(updates, "team_id=?")
+			args = append(args, bob.TeamID)
+		}
+
+		if len(updates) == 0 {
+			ctx.JSON(http.StatusOK, gin.H{"message": "you want to change smthg? what it is??"})
+			return
+		}
+
+		query := fmt.Sprintf("UPDATE ppl SET %s WHERE uid=?", strings.Join(updates, ", "))
+		args = append(args, id)
+
+		_, err = db.Exec(query, args...)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"message": "updated!"})
+	})
+
 	r.Run(":8080")
 }
